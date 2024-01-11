@@ -10,6 +10,7 @@
     using Common.Model;
     using CSLib.Net.Diagnostics;
     using Model.Actions;
+    using Adan.Client.Common.Messages;
     /// <summary>
     /// A <see cref="ConveyorUnit"/> that processes aliases.
     /// </summary>
@@ -68,79 +69,103 @@
             {
                 foreach (var alias in group.Aliases)
                 {
-                    if (!commandText.StartsWith(alias.Command + " ", StringComparison.OrdinalIgnoreCase) && !commandText.Equals(alias.Command, StringComparison.OrdinalIgnoreCase))
+                    if (commandText.StartsWith(alias.Command, StringComparison.OrdinalIgnoreCase)
+                        && (commandText.Count() == alias.Command.Count() || commandText[alias.Command.Count()] == ' '))
                     {
-                        continue;
+                        HandleAlias(commandText, alias);
+                        textCommand.Handled = true;
+                        return;
                     }
-
-                    int ind = commandText.IndexOf(' ');
-                    if (ind != -1)
-                        _context.Parameters[0] = commandText.Substring(ind + 1);
-                    else
-                        _context.Parameters[0] = String.Empty;
-
-                    var parts = _context.Parameters[0].Split(_paramsSeparatorArray, StringSplitOptions.RemoveEmptyEntries);
-                    for (int i = 1; i < 10; ++i)
-                    {
-                        if (i - 1 < parts.Length)
-                            _context.Parameters[i] = parts[i - 1];
-                        else
-                            _context.Parameters[i] = string.Empty;
-                    }
-
-                    //If we have only 1 parameter then %1 = %0 like in jmc
-                    var allCommandText = String.Join(";", alias.Actions.OfType<SendTextAction>().Select(a => a.CommandText).ToArray());
-                    if (allCommandText.Contains("%1") && !allCommandText.Contains("%0") && !allCommandText.Contains("%2"))
-                    {
-                        _context.Parameters[1] = _context.Parameters[0];
-                    }
-                    
-                    var aliasContainsParams = false;
-                    int lastSendTextAction = -1;
-                    for (var i = 0; i < alias.Actions.Count; ++i)
-                    {
-                        var act = alias.Actions[i] as SendTextAction;
-                        if (act != null)
-                        {
-                            lastSendTextAction = i;
-                            if (act.CommandText.Contains("%0") || act.CommandText.Contains("%1"))
-                                aliasContainsParams = true;
-                        }
-                    }
-
-                    for (var i = 0; i < alias.Actions.Count; i++)
-                    {
-                        if (i == lastSendTextAction && !aliasContainsParams)
-                        {
-                            var sendTextAction = alias.Actions[i] as SendTextAction;
-                            if (sendTextAction == null)
-                            {
-                                continue;
-                            }
-
-                            if (sendTextAction.Parameters.Any())
-                            {
-                                sendTextAction.Execute(Conveyor.RootModel, _context);
-                            }
-                            else
-                            {
-                                new SendTextAction
-                                {
-                                    CommandText = sendTextAction.CommandText + " " + _context.Parameters[0]
-                                }.Execute(Conveyor.RootModel, _context);
-                            }
-                        }
-                        else
-                        {
-                            alias.Actions[i].Execute(Conveyor.RootModel, _context);
-                        }
-                    }
-
-                    Conveyor.RootModel.PushCommandToConveyor(FlushOutputQueueCommand.Instance);
-                    textCommand.Handled = true;
-                    return;
                 }
             }
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private void HandleAlias(string commandText, CommandAlias alias)
+        {
+            int ind = commandText.IndexOf(' ');
+            if (ind != -1)
+                _context.Parameters[0] = commandText.Substring(ind + 1);
+            else
+                _context.Parameters[0] = String.Empty;
+
+            var parts = _context.Parameters[0].Split(_paramsSeparatorArray, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 1; i < 10; ++i)
+            {
+                if (i - 1 < parts.Length)
+                    _context.Parameters[i] = parts[i - 1];
+                else
+                    _context.Parameters[i] = string.Empty;
+            }
+
+            //If we have only 1 parameter then %1 = %0 like in jmc
+            var allCommandText = String.Join(";", alias.Actions.OfType<SendTextAction>().Select(a => a.CommandText).ToArray());
+            if (allCommandText.Contains("%1") && !allCommandText.Contains("%0") && !allCommandText.Contains("%2"))
+            {
+                _context.Parameters[1] = _context.Parameters[0];
+            }
+
+            var aliasContainsParams = false;
+            int lastSendTextAction = -1;
+            for (var i = 0; i < alias.Actions.Count; ++i)
+            {
+                var act = alias.Actions[i] as SendTextAction;
+                if (act != null)
+                {
+                    lastSendTextAction = i;
+                    if (act.CommandText.Contains("%0") || act.CommandText.Contains("%1"))
+                        aliasContainsParams = true;
+                }
+            }
+
+            for (var i = 0; i < alias.Actions.Count; i++)
+            {
+                if (alias.Actions[i].IsHandling)
+                {
+                    Conveyor.RootModel.PushMessageToConveyor(new ErrorMessage(string.Format("#Обнаружен циклический алиас {{{0}}}", alias.Actions[i].ToString())));
+                    Conveyor.RootModel.PushMessageToConveyor(new ErrorMessage("#Работа прерывается"));
+                    return;
+                }
+
+                try
+                {
+                    alias.Actions[i].IsHandling = true;
+
+                    if (i == lastSendTextAction && !aliasContainsParams)
+                    {
+                        var sendTextAction = alias.Actions[i] as SendTextAction;
+                        if (sendTextAction == null)
+                        {
+                            continue;
+                        }
+
+                        if (sendTextAction.Parameters.Any())
+                        {
+                            sendTextAction.Execute(Conveyor.RootModel, _context);
+                        }
+                        else
+                        {
+                            new SendTextAction
+                            {
+                                CommandText = sendTextAction.CommandText + " " + _context.Parameters[0]
+                            }.Execute(Conveyor.RootModel, _context);
+                        }
+                    }
+                    else
+                    {
+                        alias.Actions[i].Execute(Conveyor.RootModel, _context);
+                    }
+                }
+                finally
+                {
+                    alias.Actions[i].IsHandling = false;
+                }
+            }
+
+            Conveyor.RootModel.PushCommandToConveyor(FlushOutputQueueCommand.Instance);
         }
 
         #endregion
