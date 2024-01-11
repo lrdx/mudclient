@@ -33,6 +33,7 @@
 
             _mainWindow = mainWindow;
             RootModel = rootModel;
+
             txtCommandInput.RootModel = rootModel;
             txtCommandInput.GotFocus += HandleGotFocus;
             txtCommandInput.GotKeyboardFocus += HandleGotFocus;
@@ -445,6 +446,12 @@
             return secondaryScrollOutput.MakeVisible(visual, rectangle);
         }
 
+        #endregion
+
+        #region Methods
+
+
+
         /// <summary>
         /// Displays/hides status bar.
         /// </summary>
@@ -489,7 +496,7 @@
         /// Displays/hides status bar.
         /// </summary>
         public void SetStatusBar(string idString, string message, string colorString, bool verbose = true)
-        {            
+        {
             byte Id;
             if (!byte.TryParse(idString, out Id))
             {
@@ -502,7 +509,6 @@
             {
                 DisplayStatusBar(true, false);
             }
-
 
             TextBlock textBlock;
             if (Id == 1) textBlock = StatusBar1;
@@ -582,10 +588,6 @@
             RootModel.SetVariableValue("statusBar" + Id, message, true);
             RootModel.SetVariableValue("statusBar" + Id + "Col", colorString, true);
         }
-
-        #endregion
-
-        #region Methods
 
         public void SaveCurrentHistory(ProfileHolder profile)
         {

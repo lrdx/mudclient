@@ -91,24 +91,24 @@ namespace Adan.Client.Model.ActionParameters
             var rightVal = SecondOperand.GetParameterValue(rootModel, context);
 
             double leftValueNumeric;
-            double rightValueNumertic;
+            double rightValueNumeric;
 
             bool isLeftValueNumeric = double.TryParse(leftVal, NumberStyles.Any, CultureInfo.InvariantCulture, out leftValueNumeric);
-            bool isRightValueNumeric = double.TryParse(rightVal, NumberStyles.Any, CultureInfo.InvariantCulture, out rightValueNumertic);
+            bool isRightValueNumeric = double.TryParse(rightVal, NumberStyles.Any, CultureInfo.InvariantCulture, out rightValueNumeric);
             if (isRightValueNumeric && isLeftValueNumeric)
             {
                 switch (Operation)
                 {
                     case MathOperation.Plus:
-                        return (leftValueNumeric + rightValueNumertic).ToString(CultureInfo.InvariantCulture);
+                        return (leftValueNumeric + rightValueNumeric).ToString(CultureInfo.InvariantCulture);
                     case MathOperation.Minus:
-                        return (leftValueNumeric - rightValueNumertic).ToString(CultureInfo.InvariantCulture);
+                        return (leftValueNumeric - rightValueNumeric).ToString(CultureInfo.InvariantCulture);
                     case MathOperation.Multiplication:
-                        return (leftValueNumeric * rightValueNumertic).ToString(CultureInfo.InvariantCulture);
+                        return (leftValueNumeric * rightValueNumeric).ToString(CultureInfo.InvariantCulture);
                     case MathOperation.Division:
-                        return rightValueNumertic == 0
+                        return rightValueNumeric == 0
                                    ? string.Empty
-                                   : (leftValueNumeric / rightValueNumertic).ToString(CultureInfo.InvariantCulture);
+                                   : (leftValueNumeric / rightValueNumeric).ToString(CultureInfo.InvariantCulture);
                 }
             }
             else
