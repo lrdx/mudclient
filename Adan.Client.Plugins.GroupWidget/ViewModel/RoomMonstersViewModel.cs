@@ -45,7 +45,6 @@
                 Width -= 22;
             }
 
-
             DisplayedItemLimit = Settings.Default.IsMonsterLimitOn ? Settings.Default.MonsterLimit : 9999;
             if (DisplayedItemLimit < 1)
             {
@@ -143,8 +142,6 @@
         }
 
         public int DisplayedItemLimit { get; set; }
-
-
 
         /// <summary>
         /// Updates the model.

@@ -58,6 +58,8 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
             ((ICollectionView)affectsSortedAndFiltered).SortDescriptions.Add(new SortDescription() { Direction = ListSortDirection.Ascending, PropertyName = "Priority" });
             AffectsSortedAndFiltered = (ICollectionView)affectsSortedAndFiltered;
             AffectsPanelWidth = affectsPanelWidth;
+
+            UpdateAffects(groupMate);
         }
 
         /// <summary>
@@ -363,6 +365,25 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
             Number = position;
             HitsColor = GetColor(HitsPercent);
             MovesColor = GetColor(MovesPercent);
+
+            UpdateAffects(characterStatus);
+
+            var oldMemTime = GroupMate.MemTime;
+            var oldWaitTime = GroupMate.WaitState;
+            GroupMate = characterStatus;
+            if (MemTimeVisibleSetting && oldMemTime != GroupMate.MemTime)
+            {
+                OnPropertyChanged("MemTime");
+            }
+
+            if (oldWaitTime != GroupMate.WaitState)
+            {
+                OnPropertyChanged("WaitTimeHeight");
+            }
+        }
+
+        private void UpdateAffects([NotNull] CharacterStatus characterStatus)
+        {
             _notProcessedAffects.Clear();
             _notProcessedAffects.AddRange(Affects);
 
@@ -382,19 +403,6 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
             foreach (var notProcessedAffect in _notProcessedAffects)
             {
                 notProcessedAffect.OnAffectRemoved();
-            }
-
-            var oldMemTime = GroupMate.MemTime;
-            var oldWaitTime = GroupMate.WaitState;
-            GroupMate = characterStatus;
-            if (MemTimeVisibleSetting && oldMemTime != GroupMate.MemTime)
-            {
-                OnPropertyChanged("MemTime");
-            }
-
-            if (oldWaitTime != GroupMate.WaitState)
-            {
-                OnPropertyChanged("WaitTimeHeight");
             }
         }
 

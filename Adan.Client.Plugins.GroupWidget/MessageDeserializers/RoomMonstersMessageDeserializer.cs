@@ -60,6 +60,7 @@
                 {
                     using (var stringReader = new StringReader(str))
                     {
+
                         var message = (RoomMonstersMessage)_serializer.Deserialize(stringReader);
                         PushMessageToConveyor(message);
                     }

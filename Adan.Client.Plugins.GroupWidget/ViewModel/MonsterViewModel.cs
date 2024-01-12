@@ -88,7 +88,7 @@
             }
         }
 
-       /// <summary>
+        /// <summary>
         /// Updates this view model from model.
         /// </summary>
         public override void UpdateFromModel(CharacterStatus characterStatus, int position)

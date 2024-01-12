@@ -259,6 +259,8 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
         /// </summary>
         public void OnAffectRemoved()
         {
+            var oldDisplayIcon = DisplayIcon;
+
             DisplayIcon = string.Empty;
             SecondsLeftVisible = false;
             SecondsLeft = 0;
@@ -266,7 +268,11 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
             RoundsLeftVisible = false;
             RealAffectName = string.Empty;
             IsBlinking = false;
-            OnPropertyChanged("Priority");
+
+            if (!string.IsNullOrEmpty(oldDisplayIcon))
+            {
+                OnPropertyChanged("Priority");
+            }
         }
 
         /// <summary>
