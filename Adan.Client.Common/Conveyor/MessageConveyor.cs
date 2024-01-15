@@ -404,16 +404,10 @@ namespace Adan.Client.Common.Conveyor
 
         #region Methods
 
-        private readonly System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-        private int bytes_read = 0;
-        private int last_message = 0;
-
         private void HandleDataReceived([NotNull] object sender, [NotNull] DataReceivedEventArgs e)
         {
             Assert.ArgumentNotNull(sender, "sender");
             Assert.ArgumentNotNull(e, "e");
-
-            sw.Start();
             
             try
             {
@@ -423,7 +417,7 @@ namespace Adan.Client.Common.Conveyor
                 int bytesRecieved = e.BytesReceived;
                 byte[] data = e.GetData();
 
-                while(offset < end)
+                while (offset < end)
                 {
                     if (_analyzer.ProcessNext(data[offset]))
                     {
@@ -476,20 +470,6 @@ namespace Adan.Client.Common.Conveyor
                 ErrorLogger.Instance.Write(string.Format("Error handle data received: {0}\r\n{1}", ex.Message, ex.StackTrace));
                 PushMessage(new ErrorMessage(ex.Message));
             }
-            
-            sw.Stop();
-            bytes_read += e.BytesReceived;
-
-            if (bytes_read > last_message + 10000)
-            {
-                ErrorLogger.Instance.Write(string.Format("HandleDataReceived elapsed {0} ticks for {1} bytes \r\n", sw.ElapsedTicks, bytes_read));
-                last_message += 10000;
-            }
-        }
-
-        private int FindIAC(byte[] data, int offset, int bytesCount)
-        {
-            return Array.IndexOf(data, TelnetConstants.InterpretAsCommandCode, offset, bytesCount);
         }
 
         private void FlushBufferToDeserializer(int bytesCount, bool isComplete)
@@ -507,9 +487,6 @@ namespace Adan.Client.Common.Conveyor
                 return;
             }
 
-            //TODO: Remove copying to additional array
-            //byte[] buffer = new byte[actualBytesReceived];
-            //Array.Copy(_buffer, buffer, actualBytesReceived);
             deserializer.DeserializeDataFromServer(0, bytesCount, _buffer, isComplete);
         }
 
