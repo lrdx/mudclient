@@ -269,10 +269,7 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
             RealAffectName = string.Empty;
             IsBlinking = false;
 
-            if (!string.IsNullOrEmpty(oldDisplayIcon))
-            {
-                OnPropertyChanged("Priority");
-            }
+            OnPropertyChanged("Priority");
         }
 
         /// <summary>

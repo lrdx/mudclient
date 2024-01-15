@@ -211,6 +211,7 @@ namespace Adan.Client.Map
             {
                 RouteManager?.UpdateCurrentRoom(ViewModel.AllRooms.FirstOrDefault(r => r.RoomId == currentRoom), ViewModel);
             }
+
             var actionToExecute = (Action)(() =>
             {
                 if (ViewModel != null)

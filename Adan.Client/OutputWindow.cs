@@ -153,6 +153,7 @@ namespace Adan.Client
                     else
                         Application.Current.Dispatcher.BeginInvoke((Action)ProcessMessageQueue, DispatcherPriority.Background);
                 }
+
                 return;
             }
 
