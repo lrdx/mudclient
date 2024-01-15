@@ -9,6 +9,7 @@
 
 namespace Adan.Client.Plugins.GroupWidget.ViewModel
 {
+    using System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Linq;
@@ -26,6 +27,7 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
     public class GroupMateViewModel : ViewModelBase
     {
         private readonly List<AffectViewModel> _notProcessedAffects = new List<AffectViewModel>();
+        private DateTime _last_timer_update = DateTime.Now;
 
         private bool _isDeleting;
         private TextColor _movesColor;
@@ -175,7 +177,8 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
             }
         }
 
-        private int _mem_time;
+        private int _lastServerMemTime;
+        private float _mem_time;
         public string MemTime
         {
             get
@@ -195,8 +198,8 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
                     return string.Empty;
                 }
 
-                var memTimeMinutes = _mem_time / 60;
-                var memTimeSeconds = _mem_time % 60;
+                var memTimeMinutes = (int)_mem_time / 60;
+                var memTimeSeconds = (int)_mem_time % 60;
                 return string.Format("{0:00}:{1:00}", memTimeMinutes, memTimeSeconds);
             }
         }
@@ -377,12 +380,11 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
 
             UpdateAffects(characterStatus);
 
-            var oldMemTime = _mem_time;
-
-            _mem_time = characterStatus.MemTime;
-
-            if (MemTimeVisibleSetting && oldMemTime != _mem_time)
+            if (MemTimeVisibleSetting && _lastServerMemTime != characterStatus.MemTime)
             {
+                _lastServerMemTime = characterStatus.MemTime;
+                _mem_time = _lastServerMemTime;
+                _last_timer_update = DateTime.Now;
                 OnPropertyChanged("MemTime");
             }
 
@@ -423,11 +425,28 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
         /// <summary>
         /// Updates the timings.
         /// </summary>
-        public void UpdateTimings()
+        public void UpdateTimings(DateTime now)
         {
             foreach (var affectViewModel in Affects)
             {
-                affectViewModel.UpdateTimings();
+                affectViewModel.UpdateTimings(now);
+            }
+
+            var old_mem_time = _mem_time;
+            if (_mem_time > 0)
+            {
+                _mem_time -= (float)(now - _last_timer_update).TotalSeconds;
+                if (_mem_time < 0)
+                {
+                    _mem_time = 0;
+                }
+
+                _last_timer_update = now;
+
+                if ((old_mem_time / 60  != _mem_time / 60) || (old_mem_time % 60 != _mem_time % 60))
+                {
+                    OnPropertyChanged("MemTime");
+                }
             }
         }
 

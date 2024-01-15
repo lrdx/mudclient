@@ -360,7 +360,7 @@ namespace Adan.Client.Common.Conveyor
             }
             catch (Exception ex)
             {
-                ErrorLogger.Instance.Write(string.Format("Error push message: {0}\r\n{1}", ex.Message, ex.StackTrace));
+                ErrorLogger.Instance.Write(string.Format("Error push message: {{{0}}}\r\n{{{1}}}", ex.Message, ex.StackTrace));
             }
         }
 

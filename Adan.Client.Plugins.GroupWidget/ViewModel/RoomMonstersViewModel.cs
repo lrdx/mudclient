@@ -221,7 +221,7 @@
         {
             foreach (var monster in Monsters)
             {
-                monster.UpdateTimings();
+                monster.UpdateTimings(DateTime.Now);
             }
         }
     }
