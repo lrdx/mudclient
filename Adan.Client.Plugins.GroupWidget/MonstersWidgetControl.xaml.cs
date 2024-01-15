@@ -102,22 +102,26 @@ namespace Adan.Client.Plugins.GroupWidget
 
             Action actToExecute = () =>
             {
-                RoomMonstersViewModel viewModel = DataContext as RoomMonstersViewModel;
-
-                List<MonsterStatus> list = null;
-                lock (_stack_lock)
+                try
                 {
-                    if (_monsters_stack.Count > 0)
+                    RoomMonstersViewModel viewModel = DataContext as RoomMonstersViewModel;
+
+                    List<MonsterStatus> list = null;
+                    lock (_stack_lock)
                     {
-                        list = _monsters_stack.Pop();
-                        _monsters_stack.Clear();
+                        if (_monsters_stack.Count > 0)
+                        {
+                            list = _monsters_stack.Pop();
+                            _monsters_stack.Clear();
+                        }
+                    }
+
+                    if (list != null)
+                    {
+                        viewModel.UpdateModel(list);
                     }
                 }
-                
-                if (list != null)
-                {
-                    viewModel.UpdateModel(list);
-                }
+                catch (Exception) { }
             };
 
             lock (_stack_lock)

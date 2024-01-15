@@ -110,22 +110,26 @@ namespace Adan.Client.Plugins.GroupWidget
 
             Action actToExecute = () =>
             {
-                GroupStatusViewModel viewModel = DataContext as GroupStatusViewModel;
-
-                List<CharacterStatus> list = null;
-                lock (_stack_lock)
+                try
                 {
-                    if (_charactrers_stack.Count > 0)
+                    GroupStatusViewModel viewModel = DataContext as GroupStatusViewModel;
+
+                    List<CharacterStatus> list = null;
+                    lock (_stack_lock)
                     {
-                        list = _charactrers_stack.Pop();
-                        _charactrers_stack.Clear();
+                        if (_charactrers_stack.Count > 0)
+                        {
+                            list = _charactrers_stack.Pop();
+                            _charactrers_stack.Clear();
+                        }
+                    }
+
+                    if (list != null)
+                    {
+                        viewModel.UpdateModel(list);
                     }
                 }
-
-                if (list != null)
-                {
-                    viewModel.UpdateModel(list);
-                }
+                catch (Exception) { }
             };
 
             lock (_stack_lock)
