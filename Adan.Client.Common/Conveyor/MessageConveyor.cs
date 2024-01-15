@@ -463,7 +463,8 @@ namespace Adan.Client.Common.Conveyor
                     }
                 }
 
-                FlushBufferToDeserializer(actualBytesReceived, false);
+                if (actualBytesReceived > 0)
+                    FlushBufferToDeserializer(actualBytesReceived, false);
             }
             catch (Exception ex)
             {
@@ -474,11 +475,6 @@ namespace Adan.Client.Common.Conveyor
 
         private void FlushBufferToDeserializer(int bytesCount, bool isComplete)
         {
-            if (bytesCount <= 0)
-            {
-                return;
-            }
-
             var deserializer = _currentMessageDeserializers.FirstOrDefault(d => d.DeserializedMessageType == _currentMessageType);
             if (deserializer == null)
             {

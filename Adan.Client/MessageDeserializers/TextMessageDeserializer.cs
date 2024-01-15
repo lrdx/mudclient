@@ -84,6 +84,9 @@
         {
             Assert.ArgumentNotNull(data, "data");
 
+            if (bytesReceived <= 0)
+                return;
+
             int currentDataBufferPosition = 0;
 
             var incomingCharsCount = _encoding.GetChars(data, offset, bytesReceived, _charBuffer, 0);
