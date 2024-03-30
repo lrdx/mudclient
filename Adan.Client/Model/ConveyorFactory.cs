@@ -11,9 +11,9 @@ namespace Adan.Client.Model
 
     public sealed class ConveyorFactory
     {
-        public static MessageConveyor CreateNew(string name, IList<RootModel> allRootModels)
+        public static MessageConveyor CreateNew(string name, string uid, IList<RootModel> allRootModels)
         {
-            var conveyor = MessageConveyor.CreateNew(name, SettingsHolder.Instance.GetProfile(name), allRootModels);
+            var conveyor = MessageConveyor.CreateNew(name, uid, SettingsHolder.Instance.GetProfile(name), allRootModels);
             InitializeConveyorUnits(conveyor);
 
             return conveyor;

@@ -38,7 +38,7 @@ namespace Adan.Client.Common.Conveyor
         #region Events
 
         /// <summary>
-        /// Occurs when message if revieved from server.
+        /// Occurs when message if recieved from server.
         /// </summary>
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
@@ -79,10 +79,14 @@ namespace Adan.Client.Common.Conveyor
             _mccpClient.Disconnected += HandleDisconnected;
         }
 
-        public static MessageConveyor CreateNew(string model, ProfileHolder profile, IList<RootModel> allRootModels)
+        public static MessageConveyor CreateNew(string name, string uid, ProfileHolder profile, IList<RootModel> allRootModels)
         {
             var result = new MessageConveyor(new MccpClient());
-            var rootModel = new RootModel(result, profile, allRootModels);
+            var rootModel = new RootModel(result, profile, allRootModels)
+            {
+                Uid = uid,
+            };
+
             allRootModels.Add(rootModel);
             result.RootModel = rootModel;
             return result;
