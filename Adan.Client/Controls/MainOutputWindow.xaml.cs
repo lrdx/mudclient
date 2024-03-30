@@ -34,6 +34,8 @@
             _mainWindow = mainWindow;
             RootModel = rootModel;
 
+            this.Loaded += (sender, e) => txtCommandInput.Focus();
+
             txtCommandInput.RootModel = rootModel;
             txtCommandInput.GotFocus += HandleGotFocus;
             txtCommandInput.GotKeyboardFocus += HandleGotFocus;
@@ -627,6 +629,7 @@
         private void HandleGotFocus(object sender, RoutedEventArgs e)
         {
             PluginHost.Instance.OutputWindowChanged(RootModel);
+            e.Handled = true;
         }
 
         #endregion
