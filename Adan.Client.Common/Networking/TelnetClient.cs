@@ -106,6 +106,17 @@ namespace Adan.Client.Common.Networking
             Validate.ArgumentNotNull(host, "host");
 
             _theSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            // Set and change keep alive
+            _theSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+            int size = 4;
+            byte[] keepAliveArr = new byte[size * 3];
+            Buffer.BlockCopy(BitConverter.GetBytes((uint)1), 0, keepAliveArr, 0, size);
+            Buffer.BlockCopy(BitConverter.GetBytes((uint)1000), 0, keepAliveArr, size, size);
+            Buffer.BlockCopy(BitConverter.GetBytes((uint)1000), 0, keepAliveArr, size* 2, size);
+
+            _theSocket.IOControl(IOControlCode.KeepAliveValues, keepAliveArr, null);
+                
             _theSocket.BeginConnect(host, port, _connectedCallback, null);
         }
 
