@@ -30,6 +30,15 @@ namespace Adan.Client.Common.Model
         }
 
         /// <summary>
+        /// Gets a value indicatins handling this action right now
+        /// </summary>
+        public bool IsHandling
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Executes this action.
         /// </summary>
         /// <param name="model">The model.</param>

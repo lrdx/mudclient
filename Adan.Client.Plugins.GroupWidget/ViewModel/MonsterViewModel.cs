@@ -22,6 +22,9 @@
             Assert.ArgumentNotNull(affectsToDisplay, "affectsToDisplay");
 
             MonsterStatus = monsterStatus;
+
+            _boss = monsterStatus.IsBoss;
+            _player_character = monsterStatus.IsPlayerCharacter;
         }
 
 
@@ -34,25 +37,26 @@
             get;
             private set;
         }
-        
+
         /// <summary>
         /// Gets or sets a value indicating whether this monster is player character.
         /// </summary>
         /// <value>
         ///   <c>true</c> if this monsters is player character; otherwise, <c>false</c>.
         /// </value>
+        private bool _player_character;
         public bool PlayerCharacter
         {
             get
             {
-                return MonsterStatus.IsPlayerCharacter;
+                return _player_character;
             }
 
             set
             {
-                if (value != MonsterStatus.IsPlayerCharacter)
+                if (value != _player_character)
                 {
-                    MonsterStatus.IsPlayerCharacter = value;
+                    _player_character = value;
                     OnPropertyChanged("PlayerCharacter");
                 }
             }
@@ -71,24 +75,25 @@
         /// <value>
         ///   <c>true</c> if this monster is boss; otherwise, <c>false</c>.
         /// </value>
+        private bool _boss;
         public bool Boss
         {
             get
             {
-                return MonsterStatus.IsBoss;
+                return _boss;
             }
 
             set
             {
-                if (value != MonsterStatus.IsBoss)
+                if (value != _boss)
                 {
-                    MonsterStatus.IsBoss = value;
+                    _boss = value;
                     OnPropertyChanged("Boss");
                 }
             }
         }
 
-       /// <summary>
+        /// <summary>
         /// Updates this view model from model.
         /// </summary>
         public override void UpdateFromModel(CharacterStatus characterStatus, int position)

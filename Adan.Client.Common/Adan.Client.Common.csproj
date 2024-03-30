@@ -83,6 +83,7 @@
     <Compile Include="Controls\TextFormatting\MessageTextSource.cs" />
     <Compile Include="Controls\TextFormatting\TextSelectionSettings.cs" />
     <Compile Include="Model\IUndo.cs" />
+    <Compile Include="Networking\ControlCodeAnalyser.cs" />
     <Compile Include="Settings\CommonProfileSettings.cs" />
     <Compile Include="Controls\ActionEditorControl.xaml.cs">
       <DependentUpon>ActionEditorControl.xaml</DependentUpon>

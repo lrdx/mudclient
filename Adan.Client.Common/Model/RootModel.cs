@@ -736,6 +736,15 @@
                 rootModel.PushCommandToConveyor(FlushOutputQueueCommand.Instance);
             }
         }
+
+        public void MessageToAllWindows(Message msg)
+        {
+            foreach (var rootModel in _allModels)
+            {
+                rootModel.PushMessageToConveyor(msg);
+            }
+        }
+
         #endregion
 
         private void OnProfileChanged(object sender, ProfileChangedEventArgs e)

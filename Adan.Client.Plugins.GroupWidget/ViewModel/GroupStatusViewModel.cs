@@ -248,12 +248,13 @@
             OnPropertyChanged("Width");
         }
 
-
         private void UpdateTimings()
         {
+            var now = DateTime.Now;
+
             foreach (var groupMate in GroupMates)
             {
-                groupMate.UpdateTimings();
+                groupMate.UpdateTimings(now);
             }
         }
     }

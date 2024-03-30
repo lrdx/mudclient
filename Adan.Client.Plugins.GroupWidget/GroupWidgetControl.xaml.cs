@@ -28,12 +28,15 @@ namespace Adan.Client.Plugins.GroupWidget
     /// </summary>
     public partial class GroupWidgetControl : UserControl
     {
+        private readonly object _stack_lock = new object();
+        private readonly Stack<List<CharacterStatus>> _charactrers_stack = new Stack<List<CharacterStatus>>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="GroupWidgetControl"/> class.
         /// </summary>
         public GroupWidgetControl()
         {
-            InitializeComponent();
+            InitializeComponent();            
         }
 
         /// <summary>
@@ -105,11 +108,34 @@ namespace Adan.Client.Plugins.GroupWidget
         {
             Assert.ArgumentNotNull(characters, "characters");
 
-            Action actToExecute = () => 
+            Action actToExecute = () =>
+            {
+                try
                 {
                     GroupStatusViewModel viewModel = DataContext as GroupStatusViewModel;
-                    viewModel.UpdateModel(characters);
-                };
+
+                    List<CharacterStatus> list = null;
+                    lock (_stack_lock)
+                    {
+                        if (_charactrers_stack.Count > 0)
+                        {
+                            list = _charactrers_stack.Pop();
+                            _charactrers_stack.Clear();
+                        }
+                    }
+
+                    if (list != null)
+                    {
+                        viewModel.UpdateModel(list);
+                    }
+                }
+                catch (Exception) { }
+            };
+
+            lock (_stack_lock)
+            {
+                _charactrers_stack.Push(characters);
+            }
 
             Application.Current.Dispatcher.BeginInvoke(actToExecute, DispatcherPriority.Background);
         }

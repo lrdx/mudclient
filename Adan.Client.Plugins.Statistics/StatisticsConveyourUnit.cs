@@ -160,7 +160,8 @@
                 return;
             }
 
-            if (textCommand.CommandText.TrimStart().StartsWith("стат"))
+            if (textCommand.CommandText.StartsWith("стат")
+                && (textCommand.CommandText.Count() == "стат".Count() || textCommand.CommandText["стат".Count()] == ' '))
             {
                 command.Handled = true;
                 var commandArgs = textCommand.CommandText.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);

@@ -211,6 +211,7 @@ namespace Adan.Client.Map
             {
                 RouteManager?.UpdateCurrentRoom(ViewModel.AllRooms.FirstOrDefault(r => r.RoomId == currentRoom), ViewModel);
             }
+
             var actionToExecute = (Action)(() =>
             {
                 if (ViewModel != null)
@@ -222,6 +223,26 @@ namespace Adan.Client.Map
             });
 
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, actionToExecute);
+        }
+
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            if (ViewModel != null)
+            {
+                if (e.Delta > 0)
+                {
+                    if (ViewModel.ZoomLevel < 2)
+                    {
+                        ViewModel.ZoomLevel += 0.1;
+                    }
+                }
+                else if (ViewModel.ZoomLevel > 0.1)
+                {
+                    ViewModel.ZoomLevel -= 0.1;
+                }
+            }
+
+            base.OnMouseWheel(e);
         }
 
         /// <summary>
@@ -441,7 +462,7 @@ namespace Adan.Client.Map
         {
             Assert.ArgumentNotNull(sender, "sender");
             Assert.ArgumentNotNull(e, "e");
-
+            
             if (ViewModel == null)
             {
                 return;

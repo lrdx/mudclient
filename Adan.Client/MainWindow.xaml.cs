@@ -289,7 +289,7 @@ namespace Adan.Client
             }
             else
             {
-                var outputWindow = new OutputWindow(this, args.Model.Title, _allRootModels)
+                var outputWindow = new OutputWindow(this, args.Model.Title, args.Model.ContentId, _allRootModels)
                 {
                     Uid = args.Model.ContentId,
                     DockContent = args.Model
@@ -377,7 +377,7 @@ namespace Adan.Client
 
         private void CreateOutputWindow(string name, string uid)
         {
-            OutputWindow outputWindow = new OutputWindow(this, name, _allRootModels);
+            OutputWindow outputWindow = new OutputWindow(this, name, uid, _allRootModels);
             _outputWindows.Add(outputWindow);
             outputWindow.Uid = uid;
 

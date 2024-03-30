@@ -195,6 +195,7 @@
 
             RootModel.PushCommandToConveyor(new TextCommand(command));
             RootModel.PushCommandToConveyor(FlushOutputQueueCommand.Instance);
+
             if (SettingsHolder.Instance.Settings.AutoClearInput)
             {
                 _selfTextChanges = true;

@@ -33,6 +33,9 @@
 
             _mainWindow = mainWindow;
             RootModel = rootModel;
+
+            this.Loaded += (sender, e) => txtCommandInput.Focus();
+
             txtCommandInput.RootModel = rootModel;
             txtCommandInput.GotFocus += HandleGotFocus;
             txtCommandInput.GotKeyboardFocus += HandleGotFocus;
@@ -445,6 +448,12 @@
             return secondaryScrollOutput.MakeVisible(visual, rectangle);
         }
 
+        #endregion
+
+        #region Methods
+
+
+
         /// <summary>
         /// Displays/hides status bar.
         /// </summary>
@@ -489,7 +498,7 @@
         /// Displays/hides status bar.
         /// </summary>
         public void SetStatusBar(string idString, string message, string colorString, bool verbose = true)
-        {            
+        {
             byte Id;
             if (!byte.TryParse(idString, out Id))
             {
@@ -502,7 +511,6 @@
             {
                 DisplayStatusBar(true, false);
             }
-
 
             TextBlock textBlock;
             if (Id == 1) textBlock = StatusBar1;
@@ -583,10 +591,6 @@
             RootModel.SetVariableValue("statusBar" + Id + "Col", colorString, true);
         }
 
-        #endregion
-
-        #region Methods
-
         public void SaveCurrentHistory(ProfileHolder profile)
         {
             txtCommandInput.SaveCurrentHistory(profile);
@@ -625,6 +629,7 @@
         private void HandleGotFocus(object sender, RoutedEventArgs e)
         {
             PluginHost.Instance.OutputWindowChanged(RootModel);
+            e.Handled = true;
         }
 
         #endregion

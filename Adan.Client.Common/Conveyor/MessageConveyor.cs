@@ -34,10 +34,11 @@ namespace Adan.Client.Common.Conveyor
     /// </summary>
     public sealed class MessageConveyor : IDisposable
     {
+
         #region Events
 
         /// <summary>
-        /// Occurs when message if revieved from server.
+        /// Occurs when message if recieved from server.
         /// </summary>
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
@@ -59,6 +60,8 @@ namespace Adan.Client.Common.Conveyor
         private readonly MccpClient _mccpClient;
         private readonly byte[] _buffer = new byte[32767];
 
+        private readonly ControlCodeAnalyser _analyzer = new ControlCodeAnalyser();
+
         private int _currentMessageType = BuiltInMessageTypes.TextMessage;
 
         #endregion
@@ -76,10 +79,14 @@ namespace Adan.Client.Common.Conveyor
             _mccpClient.Disconnected += HandleDisconnected;
         }
 
-        public static MessageConveyor CreateNew(string model, ProfileHolder profile, IList<RootModel> allRootModels)
+        public static MessageConveyor CreateNew(string name, string uid, ProfileHolder profile, IList<RootModel> allRootModels)
         {
             var result = new MessageConveyor(new MccpClient());
-            var rootModel = new RootModel(result, profile, allRootModels);
+            var rootModel = new RootModel(result, profile, allRootModels)
+            {
+                Uid = uid,
+            };
+
             allRootModels.Add(rootModel);
             result.RootModel = rootModel;
             return result;
@@ -357,7 +364,7 @@ namespace Adan.Client.Common.Conveyor
             }
             catch (Exception ex)
             {
-                ErrorLogger.Instance.Write(string.Format("Error push message: {0}\r\n{1}", ex.Message, ex.StackTrace));
+                ErrorLogger.Instance.Write(string.Format("Error push message: {{{0}}}\r\n{{{1}}}", ex.Message, ex.StackTrace));
             }
         }
 
@@ -405,92 +412,63 @@ namespace Adan.Client.Common.Conveyor
         {
             Assert.ArgumentNotNull(sender, "sender");
             Assert.ArgumentNotNull(e, "e");
-
+            
             try
             {
                 int offset = e.Offset;
+                int actualBytesReceived = 0;
+                int end =  e.Offset + e.BytesReceived;
                 int bytesRecieved = e.BytesReceived;
                 byte[] data = e.GetData();
 
-                int actualBytesReceived = 0;
-                for (int i = 0; i < bytesRecieved; i++)
+                while (offset < end)
                 {
-                    // removing double IAC and processing IAC GA
-                    if (i < bytesRecieved - 1
-                        && data[offset + i] == TelnetConstants.InterpretAsCommandCode
-                        && data[offset + i + 1] == TelnetConstants.InterpretAsCommandCode)
+                    if (_analyzer.ProcessNext(data[offset]))
                     {
-                        _buffer[actualBytesReceived] = TelnetConstants.InterpretAsCommandCode;
-                        i++;
-                        actualBytesReceived++;
+                        ++offset;
+                    }
+
+                    if (_analyzer.State == ControlCode.NeedMore)
+                    {
                         continue;
                     }
 
-                    if (i < bytesRecieved - 1
-                        && data[offset + i] == TelnetConstants.InterpretAsCommandCode
-                        && data[offset + i + 1] == TelnetConstants.GoAheadCode)
+                    switch(_analyzer.State)
                     {
-                        // new line
-                        _buffer[actualBytesReceived] = 0xA;
-                        i++;
-                        actualBytesReceived++;
-                        continue;
+                        case ControlCode.NoCode:
+                            _buffer[actualBytesReceived] = data[offset];
+                            ++offset;
+                            ++actualBytesReceived;
+                            break;
+                        case ControlCode.DoubleIAC:
+                            _buffer[actualBytesReceived] = TelnetConstants.InterpretAsCommandCode;
+                            ++actualBytesReceived;
+                            break;
+                        case ControlCode.GoAhead:
+                            _buffer[actualBytesReceived] = 0xA;   // new line
+                            ++actualBytesReceived;
+                            break;
+                        case ControlCode.EchoOn:
+                            PushMessage(new ChangeEchoModeMessage(false));
+                            break;
+                        case ControlCode.EchoOff:
+                            PushMessage(new ChangeEchoModeMessage(true));
+                            break;
+                        case ControlCode.CustomProtocol:
+                            FlushBufferToDeserializer(actualBytesReceived, true);
+                            actualBytesReceived = 0;
+                            _currentMessageType = _analyzer.CustomProtocolCode;
+                            break;
+                        case ControlCode.SubNegOff:
+                            FlushBufferToDeserializer(actualBytesReceived, true);
+                            _currentMessageType = BuiltInMessageTypes.TextMessage;
+                            actualBytesReceived = 0;
+                            break;
                     }
-
-                    // handling echo mode on
-                    if (i < bytesRecieved - 2
-                        && data[offset + i] == TelnetConstants.InterpretAsCommandCode
-                        && data[offset + i + 1] == TelnetConstants.WillCode
-                        && data[offset + i + 2] == TelnetConstants.EchoCode)
-                    {
-                        PushMessage(new ChangeEchoModeMessage(false));
-                        i += 2;
-                        continue;
-                    }
-
-                    // handling echo mode off
-                    if (i < bytesRecieved - 2
-                        && data[offset + i] == TelnetConstants.InterpretAsCommandCode
-                        && data[offset + i + 1] == TelnetConstants.WillNotCode
-                        && data[offset + i + 2] == TelnetConstants.EchoCode)
-                    {
-                        PushMessage(new ChangeEchoModeMessage(true));
-                        i += 2;
-                        continue;
-                    }
-
-                    // handling custom message header
-                    if (i < bytesRecieved - 3
-                        && data[offset + i] == TelnetConstants.InterpretAsCommandCode
-                        && data[offset + i + 1] == TelnetConstants.SubNegotiationStartCode
-                        && data[offset + i + 2] == TelnetConstants.CustomProtocolCode)
-                    {
-                        var messageType = data[offset + i + 3];
-                        FlushBufferToDeserializer(actualBytesReceived, true);
-                        actualBytesReceived = 0;
-                        _currentMessageType = messageType;
-                        i += 3;
-                        continue;
-                    }
-
-                    // handling custom message footer
-                    if (i < bytesRecieved - 1
-                        && data[offset + i] == TelnetConstants.InterpretAsCommandCode
-                        && data[offset + i + 1] == TelnetConstants.SubNegotiationEndCode)
-                    {
-                        FlushBufferToDeserializer(actualBytesReceived, true);
-
-                        _currentMessageType = BuiltInMessageTypes.TextMessage;
-                        actualBytesReceived = 0;
-                        i++;
-                        continue;
-                    }
-
-                    _buffer[actualBytesReceived] = data[offset + i];
-                    actualBytesReceived++;
                 }
 
-                FlushBufferToDeserializer(actualBytesReceived, false);
+                if (actualBytesReceived > 0)
+                    FlushBufferToDeserializer(actualBytesReceived, false);
             }
             catch (Exception ex)
             {
@@ -499,13 +477,8 @@ namespace Adan.Client.Common.Conveyor
             }
         }
 
-        private void FlushBufferToDeserializer(int actualBytesReceived, bool isComplete)
+        private void FlushBufferToDeserializer(int bytesCount, bool isComplete)
         {
-            if (actualBytesReceived <= 0)
-            {
-                return;
-            }
-
             var deserializer = _currentMessageDeserializers.FirstOrDefault(d => d.DeserializedMessageType == _currentMessageType);
             if (deserializer == null)
             {
@@ -514,9 +487,7 @@ namespace Adan.Client.Common.Conveyor
                 return;
             }
 
-            byte[] buffer = new byte[actualBytesReceived];
-            Array.Copy(_buffer, buffer, actualBytesReceived);
-            deserializer.DeserializeDataFromServer(0, actualBytesReceived, buffer, isComplete);
+            deserializer.DeserializeDataFromServer(0, bytesCount, _buffer, isComplete);
         }
 
         private void HandleConnected([NotNull] object sender, [NotNull] EventArgs e)

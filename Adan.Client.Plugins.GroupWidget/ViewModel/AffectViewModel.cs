@@ -259,6 +259,8 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
         /// </summary>
         public void OnAffectRemoved()
         {
+            var oldDisplayIcon = DisplayIcon;
+
             DisplayIcon = string.Empty;
             SecondsLeftVisible = false;
             SecondsLeft = 0;
@@ -266,19 +268,20 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
             RoundsLeftVisible = false;
             RealAffectName = string.Empty;
             IsBlinking = false;
+
             OnPropertyChanged("Priority");
         }
 
         /// <summary>
         /// Updates the timings.
         /// </summary>
-        public void UpdateTimings()
+        public void UpdateTimings(DateTime now)
         {
             if (!AffectDescription.IsRoundBased)
             {
                 if (SecondsLeft > 0)
                 {
-                    SecondsLeft -= (float)(DateTime.Now - _lastTimerUpdate).TotalSeconds;
+                    SecondsLeft -= (float)(now - _lastTimerUpdate).TotalSeconds;
                     if (SecondsLeft < 0)
                     {
                         DisplayIcon = string.Empty;
@@ -291,7 +294,7 @@ namespace Adan.Client.Plugins.GroupWidget.ViewModel
                         IsBlinking = SecondsLeft <= 5.0f;
                     }
 
-                    _lastTimerUpdate = DateTime.Now;
+                    _lastTimerUpdate = now;
                 }
             }
         }

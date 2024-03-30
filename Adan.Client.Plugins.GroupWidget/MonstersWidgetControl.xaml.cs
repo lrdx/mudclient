@@ -28,6 +28,9 @@ namespace Adan.Client.Plugins.GroupWidget
     /// </summary>
     public partial class MonstersWidgetControl : UserControl
     {
+        private readonly object _stack_lock = new object();
+        private readonly Stack<List<MonsterStatus>> _monsters_stack = new Stack<List<MonsterStatus>>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MonstersWidgetControl"/> class.
         /// </summary>
@@ -99,9 +102,32 @@ namespace Adan.Client.Plugins.GroupWidget
 
             Action actToExecute = () =>
             {
-                RoomMonstersViewModel viewModel = DataContext as RoomMonstersViewModel;
-                viewModel.UpdateModel(characters);
+                try
+                {
+                    RoomMonstersViewModel viewModel = DataContext as RoomMonstersViewModel;
+
+                    List<MonsterStatus> list = null;
+                    lock (_stack_lock)
+                    {
+                        if (_monsters_stack.Count > 0)
+                        {
+                            list = _monsters_stack.Pop();
+                            _monsters_stack.Clear();
+                        }
+                    }
+
+                    if (list != null)
+                    {
+                        viewModel.UpdateModel(list);
+                    }
+                }
+                catch (Exception) { }
             };
+
+            lock (_stack_lock)
+            {
+                _monsters_stack.Push(characters);
+            }
 
             Application.Current.Dispatcher.BeginInvoke(actToExecute, DispatcherPriority.Background);
         }

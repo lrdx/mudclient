@@ -13,3 +13,5 @@
 /Adan.Client.Setup/Debug/
 /Adan.Client.Setup/Release/
 /Adan.Client.Plugins.AI
+/**/obj
+/**/bin/

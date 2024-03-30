@@ -34,7 +34,6 @@ namespace Adan.Client.Common.Messages
         /// </summary>
         public const int LoggingMessage = 4;
 
-
         /// <summary>
         /// Type of message to turn echoing on/off.
         /// </summary>

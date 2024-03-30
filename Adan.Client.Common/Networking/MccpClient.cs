@@ -156,11 +156,12 @@
 
         private void ProcessData(byte[] data, int startOffset, int bytesCount)
         {
-            int lastOffset = startOffset + bytesCount;
-            int offset = startOffset;
-            offset = FindIAC(data, offset, lastOffset - offset);
             if (!_compressionEnabled || !_compressionInProgress || !_customProtocolEnabled)
             {
+                int lastOffset = startOffset + bytesCount;
+                int offset = startOffset;
+                offset = FindIAC(data, offset, lastOffset - offset);
+
                 while (offset >= 0)
                 {
                     int codeLength = ProcessIAC(data, offset, lastOffset - offset);
@@ -182,21 +183,15 @@
                 }
             }
 
-            base.OnDataReceived(this, new DataReceivedEventArgs(bytesCount, startOffset, data));
+            if (bytesCount > 0)
+            {
+                base.OnDataReceived(this, new DataReceivedEventArgs(bytesCount, startOffset, data));
+            }
         }
 
         private int FindIAC(byte[] data, int offset, int bytesCount)
         {
-            int endOffset = offset + bytesCount;
-            while (offset < endOffset)
-            {
-                if (data[offset] == TelnetConstants.InterpretAsCommandCode)
-                    return offset;
-
-                offset++;
-            }
-
-            return -1;
+            return Array.IndexOf(data, TelnetConstants.InterpretAsCommandCode, offset, bytesCount);
         }
 
         private int ProcessIAC(byte[] data, int offset, int bytesCount)

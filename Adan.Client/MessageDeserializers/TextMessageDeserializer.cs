@@ -23,12 +23,14 @@
     {
         #region Constants and Fields
 
+        private const int _asciForeGroundCodeBase = 30;
         private const int _asciBackGroundCodeBase = 40;
+
         private const char _asciCsiCharacter = '[';
         private const char _asciEscapeCharacter = '\x1B';
         private const char _asciEscapeSequenceCompleteCharacter = 'm';
         private const char _asciEscapeSequenceSeparatorCharacter = ';';
-        private const int _asciForeGroundCodeBase = 30;
+
         private readonly char[] _charBuffer = new char[32767];
 
         private readonly Encoding _encoding = Encoding.GetEncoding(1251);
@@ -84,34 +86,21 @@
         {
             Assert.ArgumentNotNull(data, "data");
 
+            if (bytesReceived <= 0)
+                return;
+
             int currentDataBufferPosition = 0;
 
             var incomingCharsCount = _encoding.GetChars(data, offset, bytesReceived, _charBuffer, 0);
             while (currentDataBufferPosition < incomingCharsCount)
             {
                 char currentChar = _charBuffer[currentDataBufferPosition];
-                if (!_isAfterEscapeChar)
+                if (currentChar == _asciEscapeCharacter)
                 {
-                    if (currentChar == _asciEscapeCharacter)
-                    {
-                        _isAfterEscapeChar = true;
-                        _isAfterCsi = false;
-                        _firstEscapeParamChar = '0';
-                        _hasSecondEsapeParamChar = false;
-                        _hasFirstEscapeParamChar = false;
-                    }
-                    else if (currentChar == '\n')
-                    {
-                        FlushCurrentBlockToBlocksList();
-                        // end of line achieved - flushing current text.
-                        FlushCurrentLineToConveyor();
-                    }
-                    else if (currentChar != '\r')
-                    {
-                        _stringBuilder.Append(currentChar);
-                    }
+                    ClearSequence();
+                    _isAfterEscapeChar = true;
                 }
-                else
+                else if (_isAfterEscapeChar)
                 {
                     if (_isAfterCsi)
                     {
@@ -119,7 +108,7 @@
                         {
                             FlushCurrentBlockToBlocksList();
                             ProcessEcapeSequence();
-                            _isAfterEscapeChar = false;
+                            ClearSequence();
                         }
                         else if (currentChar == _asciEscapeSequenceSeparatorCharacter)
                         {
@@ -142,17 +131,28 @@
                             }
                         }
                     }
+                    else if(currentChar == _asciCsiCharacter)
+                    {
+                        _isAfterCsi = true;
+                    }
                     else
                     {
-                        if (currentChar != _asciCsiCharacter)
-                        {
-                            // error wrong ascii sequence - flushing content.
-                            FlushCurrentBlockToBlocksList();
-                            _isAfterCsi = false;
-                            _isAfterEscapeChar = false;
-                        }
-
-                        _isAfterCsi = true;
+                        // error wrong ascii sequence - flushing content.
+                        FlushCurrentBlockToBlocksList();
+                        ClearSequence();
+                    }
+                }
+                else
+                {
+                    if (currentChar == '\n')
+                    {
+                        FlushCurrentBlockToBlocksList();
+                        // end of line achieved - flushing current text.
+                        FlushCurrentLineToConveyor();
+                    }
+                    else if (currentChar != '\r')
+                    {
+                        _stringBuilder.Append(currentChar);
                     }
                 }
 
@@ -163,6 +163,15 @@
         #endregion
 
         #region Methods
+
+        private void ClearSequence()
+        {
+            _isAfterEscapeChar = false;
+            _isAfterCsi = false;
+            _firstEscapeParamChar = '0';
+            _hasSecondEsapeParamChar = false;
+            _hasFirstEscapeParamChar = false;
+        }
 
         private void FlushCurrentBlockToBlocksList()
         {

@@ -25,13 +25,12 @@ namespace Adan.Client
         private RootModel _rootModel;
         private readonly MainOutputWindow _window;
 
-        public OutputWindow(MainWindow mainWindow, string name, IList<RootModel> allRootModels)
+        public OutputWindow(MainWindow mainWindow, string name, string uid, IList<RootModel> allRootModels)
         {
             _mainWindow = mainWindow;
             Name = name;
 
-
-            var conveyor = ConveyorFactory.CreateNew(name, allRootModels);
+            var conveyor = ConveyorFactory.CreateNew(name, uid, allRootModels);
             RootModel = conveyor.RootModel;
             conveyor.MessageReceived += HandleMessage;
 
@@ -153,6 +152,7 @@ namespace Adan.Client
                     else
                         Application.Current.Dispatcher.BeginInvoke((Action)ProcessMessageQueue, DispatcherPriority.Background);
                 }
+
                 return;
             }
 
